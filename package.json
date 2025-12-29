@@ -14,6 +14,8 @@
     "version": "bun scripts/syncVersion.ts"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
     "@types/bun": "^1.3.5"
   },
   "engines": {
