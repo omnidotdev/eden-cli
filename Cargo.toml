@@ -2,6 +2,7 @@
 name = "eden-cli"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.70"
 authors = ["Omni <team@omni.dev>"]
 description = "Developer onboarding preflight checks"
 license = "MIT"
@@ -31,3 +32,13 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
