@@ -1,0 +1,51 @@
+name: Sync Version 🔄
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: cargo test
+
+  version-check:
+    name: Version Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version sync
+        run: |
+          PKG_VERSION=$(jq -r '.version' package.json)
+          CARGO_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ "$PKG_VERSION" != "$CARGO_VERSION" ]; then
+            echo "Version mismatch: package.json=$PKG_VERSION, Cargo.toml=$CARGO_VERSION"
+            exit 1
+          fi
+          echo "Versions match: $PKG_VERSION"
+
+  build-artifacts:
+    name: Build (${{ matrix.target }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eden-${{ matrix.target }}
+          path: target/release/eden
