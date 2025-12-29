@@ -1,0 +1,93 @@
+name: Release 🏗️
+
+on:
+  push:
+    branches: [master]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Handle Release
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install
+      - name: Create release PR or prepare release
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: bun run version && git add Cargo.toml
+          publish: echo "ready-to-release"
+          title: "chore(release): version packages"
+          commit: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-binaries:
+    name: Build (${{ matrix.target }})
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: eden
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact: eden
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: eden
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: eden
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cross-compilation tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+      - name: Rename binary
+        run: mv target/${{ matrix.target }}/release/${{ matrix.artifact }} eden-${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eden-${{ matrix.target }}
+          path: eden-${{ matrix.target }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: [release, build-binaries]
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get version
+        id: version
+        run: echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
