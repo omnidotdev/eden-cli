@@ -15,7 +15,7 @@ pub fn check_env_var(var_name: &str) -> CheckResult {
                 mask_value(&value)
             };
 
-            CheckResult::pass("Env", var_name, format!("set ({})", display_value))
+            CheckResult::pass("Env", var_name, format!("set ({display_value})"))
         }
         Err(_) => CheckResult::fail("Env", var_name, "not set"),
     }

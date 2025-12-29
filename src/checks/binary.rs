@@ -16,7 +16,7 @@ pub fn check_binary(binary: &BinaryCheck) -> CheckResult {
             let version_str = version.as_deref().unwrap_or("unknown version");
             let path_str = path.display();
 
-            CheckResult::pass("Binary", name, format!("{} ({})", version_str, path_str))
+            CheckResult::pass("Binary", name, format!("{version_str} ({path_str})"))
         }
         Err(_) => CheckResult::fail("Binary", name, "not found in PATH"),
     }
@@ -62,14 +62,8 @@ fn extract_version(line: &str) -> String {
     for word in &words {
         // check if word looks like a version (starts with digit, contains dots)
         let clean = word.trim_matches(|c: char| !c.is_ascii_digit() && c != '.');
-        if clean
-            .chars()
-            .next()
-            .map(|c| c.is_ascii_digit())
-            .unwrap_or(false)
-            && clean.contains('.')
-        {
-            return format!("v{}", clean);
+        if clean.chars().next().is_some_and(|c| c.is_ascii_digit()) && clean.contains('.') {
+            return format!("v{clean}");
         }
     }
 

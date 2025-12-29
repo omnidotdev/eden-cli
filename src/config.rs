@@ -60,16 +60,15 @@ pub enum BinaryCheck {
 impl BinaryCheck {
     pub fn name(&self) -> &str {
         match self {
-            BinaryCheck::Simple(name) => name,
-            BinaryCheck::WithVersion { name, .. } => name,
+            Self::Simple(name) | Self::WithVersion { name, .. } => name,
         }
     }
 
     #[allow(dead_code)] // Prepared for future version constraints
     pub fn version(&self) -> Option<&str> {
         match self {
-            BinaryCheck::Simple(_) => None,
-            BinaryCheck::WithVersion { version, .. } => version.as_deref(),
+            Self::Simple(_) => None,
+            Self::WithVersion { version, .. } => version.as_deref(),
         }
     }
 }
@@ -84,7 +83,7 @@ impl Config {
                 } else {
                     return Err(ConfigError::ReadError(std::io::Error::new(
                         std::io::ErrorKind::NotFound,
-                        format!("Config file not found: {}", p),
+                        format!("Config file not found: {p}"),
                     )));
                 }
             }
@@ -99,7 +98,7 @@ impl Config {
     fn find_config() -> Result<String, ConfigError> {
         for filename in CONFIG_FILES {
             if Path::new(filename).exists() {
-                return Ok(filename.to_string());
+                return Ok((*filename).to_string());
             }
         }
         Err(ConfigError::NotFound)

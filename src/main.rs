@@ -47,7 +47,7 @@ fn run_check_command(config_path: Option<String>) -> ExitCode {
     let config = match Config::load(config_path) {
         Ok(cfg) => cfg,
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{e}");
             return ExitCode::FAILURE;
         }
     };
@@ -57,13 +57,10 @@ fn run_check_command(config_path: Option<String>) -> ExitCode {
 
     if failed > 0 {
         // TODO change need to needs if 1
-        println!("\n🌱 {} sprouted, 🥀 {} need water", passed, failed);
+        println!("\n🌱 {passed} sprouted, 🥀 {failed} need water");
         ExitCode::FAILURE
     } else {
-        println!(
-            "\n🌻 The garden is flourishing! All {} checks passed",
-            passed
-        );
+        println!("\n🌻 The garden is flourishing! All {passed} checks passed");
         ExitCode::SUCCESS
     }
 }
@@ -74,23 +71,23 @@ fn run_init_command(format: &str) -> ExitCode {
         "yaml" | "yml" => ("eden.yaml", include_str!("../templates/eden.yaml")),
         "json" => ("eden.json", include_str!("../templates/eden.json")),
         _ => {
-            eprintln!("Unsupported format: {}. Use toml, yaml, or json.", format);
+            eprintln!("Unsupported format: {format}. Use TOML, YAML, or JSON.");
             return ExitCode::FAILURE;
         }
     };
 
     if std::path::Path::new(filename).exists() {
-        eprintln!("{} already exists", filename);
+        eprintln!("{filename} already exists");
         return ExitCode::FAILURE;
     }
 
     match std::fs::write(filename, content) {
-        Ok(_) => {
-            println!("🌱 Planted {}", filename);
+        Ok(()) => {
+            println!("🌱 Planted {filename}");
             ExitCode::SUCCESS
         }
         Err(e) => {
-            eprintln!("Failed to create {}: {}", filename, e);
+            eprintln!("Failed to create {filename}: {e}");
             ExitCode::FAILURE
         }
     }
