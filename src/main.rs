@@ -56,11 +56,14 @@ fn run_check_command(config_path: Option<String>) -> ExitCode {
     let (passed, failed) = print_summary(&results);
 
     if failed > 0 {
-        // TODO change need to needs if 1
-        println!("\n🌱 {passed} sprouted, 🥀 {failed} need water");
+        let need_s = if failed == 1 { "needs" } else { "need" };
+
+        println!("\n🌱 {passed} sprouted, 🥀 {failed} {need_s} water");
+
         ExitCode::FAILURE
     } else {
         println!("\n🌻 The garden is flourishing! All {passed} checks passed");
+
         ExitCode::SUCCESS
     }
 }
@@ -84,10 +87,12 @@ fn run_init_command(format: &str) -> ExitCode {
     match std::fs::write(filename, content) {
         Ok(()) => {
             println!("🌱 Planted {filename}");
+
             ExitCode::SUCCESS
         }
         Err(e) => {
             eprintln!("Failed to create {filename}: {e}");
+
             ExitCode::FAILURE
         }
     }
