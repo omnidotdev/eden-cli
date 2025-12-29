@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eden.omni.dev/eden.schema.json",
+  "title": "Eden Configuration",
+  "description": "Developer environment preflight check configuration",
+  "type": "object",
+  "properties": {
+    "checks": {
+      "type": "object",
+      "description": "Preflight checks to run",
+      "properties": {
+        "binaries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Binaries that must be in PATH"
+        },
+        "environment": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Environment variables that must be set"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
