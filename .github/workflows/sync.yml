@@ -6,10 +6,14 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
@@ -18,6 +22,7 @@ jobs:
   version-check:
     name: Version Sync Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Check version sync
@@ -34,6 +39,7 @@ jobs:
     name: Build (${{ matrix.target }})
     if: github.event_name == 'pull_request'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       matrix:
         include:

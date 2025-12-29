@@ -6,10 +6,15 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     name: Handle Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
@@ -20,7 +25,7 @@ jobs:
         run: bun install
       - name: Create release PR or prepare release
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v1.4.9
         with:
           version: bun run version && git add Cargo.toml
           publish: echo "ready-to-release"
@@ -34,6 +39,7 @@ jobs:
     needs: release
     if: needs.release.outputs.published == 'true'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       matrix:
         include:
@@ -74,6 +80,7 @@ jobs:
     needs: [release, build-binaries]
     if: needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Get version
