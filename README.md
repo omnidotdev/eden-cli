@@ -141,6 +141,7 @@ The sync workflow will fail if `package.json` and `Cargo.toml` versions diverge.
    - `aarch64-unknown-linux-gnu`
    - `x86_64-apple-darwin`
    - `aarch64-apple-darwin`
+5. **Manually** publish to crates.io: `cargo publish`
 
 ## License
 
