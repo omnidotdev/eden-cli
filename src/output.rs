@@ -10,6 +10,7 @@ pub fn print_summary(results: &[CheckResult]) -> (usize, usize) {
     for result in results {
         if result.passed {
             passed += 1;
+
             println!(
                 "🌱 {}: {} - {}",
                 result.check_type.dimmed(),
@@ -18,6 +19,7 @@ pub fn print_summary(results: &[CheckResult]) -> (usize, usize) {
             );
         } else {
             failed += 1;
+
             println!(
                 "🥀 {}: {} - {}",
                 result.check_type.dimmed(),
