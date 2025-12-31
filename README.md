@@ -40,7 +40,7 @@ Example output:
 🌱 Binary: bun - v1.3.5(/usr/bin/bun)
 🥀 Env: DATABASE_URL - not set
 
-🌱 3 sprouted, 🥀 1 need water
+🌱 3 sprouted, 🥀 1 needs water
 ```
 
 ## Configuration
