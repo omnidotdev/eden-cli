@@ -1,0 +1,14 @@
+# Eden configuration file
+# https://eden.omni.dev
+
+checks:
+  # required binaries (must be in PATH)
+  binaries:
+    - git
+    # - docker
+    # - node
+
+  # required environment variables
+  environment: []
+    # - DATABASE_URL
+    # - API_KEY

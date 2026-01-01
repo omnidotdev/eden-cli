@@ -1,0 +1,7 @@
+{
+  "$schema": "./eden.schema.json",
+  "checks": {
+    "binaries": ["git"],
+    "environment": []
+  }
+}
