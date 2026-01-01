@@ -11,7 +11,7 @@
   "author": "Omni <team@omni.dev>",
   "type": "module",
   "scripts": {
-    "version": "bun scripts/syncVersion.ts"
+    "version": "changeset version && bun scripts/syncVersion.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
