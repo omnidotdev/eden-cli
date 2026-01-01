@@ -28,7 +28,8 @@ jobs:
         uses: changesets/action@v1.4.9
         with:
           version: bun run version && git add Cargo.toml
-          publish: echo "New tag: @omnidotdev/eden-cli@$(jq -r '.version' package.json)"
+          publish: |
+            echo "New tag: @omnidotdev/eden-cli@$(jq -r '.version' package.json)"
           title: "chore(release): version packages"
           commit: "chore(release): version packages"
         env:
