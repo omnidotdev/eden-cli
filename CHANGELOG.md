@@ -1,5 +1,11 @@
 # @omnidotdev/eden-cli
 
+## 0.2.0
+
+### Minor Changes
+
+- [#3](https://github.com/omnidotdev/eden-cli/pull/3) [`197f582`](https://github.com/omnidotdev/eden-cli/commit/197f5823bccfde59590ecc47600aa86116a0e433) Thanks [@coopbri](https://github.com/coopbri)! - Bump MSRV to 1.85, Rust edition to 2024
+
 ## 0.1.0
 
 ### Minor Changes
