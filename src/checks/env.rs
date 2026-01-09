@@ -4,8 +4,9 @@ use super::CheckResult;
 
 /// Check if an environment variable is set
 pub fn check_env_var(var_name: &str) -> CheckResult {
-    match env::var(var_name) {
-        Ok(value) => {
+    env::var(var_name).map_or_else(
+        |_| CheckResult::fail("Env", var_name, "not set"),
+        |value| {
             // Show truncated value for confirmation (hide sensitive data)
             let display_value = if value.len() > 20 {
                 format!("{}...", &value[..20])
@@ -16,9 +17,8 @@ pub fn check_env_var(var_name: &str) -> CheckResult {
             };
 
             CheckResult::pass("Env", var_name, format!("set ({display_value})"))
-        }
-        Err(_) => CheckResult::fail("Env", var_name, "not set"),
-    }
+        },
+    )
 }
 
 /// Mask sensitive values, showing only first and last 2 chars

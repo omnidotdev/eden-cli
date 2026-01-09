@@ -10,16 +10,16 @@ use super::CheckResult;
 pub fn check_binary(binary: &BinaryCheck) -> CheckResult {
     let name = binary.name();
 
-    match which(name) {
-        Ok(path) => {
+    which(name).map_or_else(
+        |_| CheckResult::fail("Binary", name, "not found in PATH"),
+        |path| {
             let version = get_version(name);
             let version_str = version.as_deref().unwrap_or("unknown version");
             let path_str = path.display();
 
             CheckResult::pass("Binary", name, format!("{version_str} ({path_str})"))
-        }
-        Err(_) => CheckResult::fail("Binary", name, "not found in PATH"),
-    }
+        },
+    )
 }
 
 /// Attempt to get version string from a binary
