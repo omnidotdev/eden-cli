@@ -139,14 +139,14 @@ environment = ["DATABASE_URL"]
 
     #[test]
     fn test_parse_yaml() {
-        let content = r#"
+        let content = r"
 checks:
   binaries:
     - docker
     - node
   environment:
     - DATABASE_URL
-"#;
+";
         let config = Config::parse("test.yaml", content).unwrap();
         assert_eq!(config.checks.binaries.len(), 2);
     }
