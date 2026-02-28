@@ -13,90 +13,115 @@ permissions:
 
 jobs:
   release:
-    name: Handle Release
+    name: Handle release 🦋
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
       published: ${{ steps.changesets.outputs.published }}
-      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      version_commit: ${{ steps.detect_version_commit.outputs.version_commit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
       - name: Install dependencies
-        run: bun install
-      - name: Create release PR or prepare release
+        run: bun i
+      - name: Create release pull request
         id: changesets
         uses: changesets/action@v1.4.9
         with:
           version: bun run version && git add Cargo.toml
           publish: |
-            echo "New tag: @omnidotdev/eden-cli@$(jq -r '.version' package.json)"
+            echo "Publishing @omnidotdev/eden-cli@$(jq -r '.version' package.json)"
           title: "chore(release): version packages"
           commit: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Detect version commit
+        id: detect_version_commit
+        run: |
+          # Detect the merged "version packages" commit even when changesets/action sets published=false.
+          FILES=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          if echo "$FILES" | grep -q '^CHANGELOG.md$' \
+            && echo "$FILES" | grep -q '^Cargo.toml$' \
+            && echo "$FILES" | grep -q '^package.json$'; then
+            echo "version_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version_commit=false" >> "$GITHUB_OUTPUT"
+          fi
 
-  build-binaries:
-    name: Build (${{ matrix.target }})
+  build:
+    name: Build ${{ matrix.target }}
     needs: release
-    if: needs.release.outputs.published == 'true'
-    runs-on: ${{ matrix.os }}
+    if: needs.release.outputs.published == 'true' || needs.release.outputs.version_commit == 'true' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 30
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            artifact: eden
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact: eden
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact: eden
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact: eden
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
       - name: Install cross-compilation tools
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-      - name: Rename binary
-        run: mv target/${{ matrix.target }}/release/${{ matrix.artifact }} eden-${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
+
+      - name: Package
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czvf eden-${{ matrix.target }}.tar.gz eden
+          mv eden-${{ matrix.target }}.tar.gz ../../../
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: eden-${{ matrix.target }}
-          path: eden-${{ matrix.target }}
+          path: eden-${{ matrix.target }}.tar.gz
 
-  create-release:
+  publish:
     name: Create GitHub Release
-    needs: [release, build-binaries]
-    if: needs.release.outputs.published == 'true'
+    needs: [release, build]
+    if: needs.release.outputs.published == 'true' || needs.release.outputs.version_commit == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Get version
+
+      - name: Get version from Cargo.toml
         id: version
-        run: echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
-      - uses: actions/download-artifact@v4
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Create release
+
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
-          files: artifacts/**/*
+          files: artifacts/**/*.tar.gz
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
