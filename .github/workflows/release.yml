@@ -125,3 +125,62 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Homebrew tap
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MACOS_X86_SHA256=$(shasum -a 256 artifacts/eden-x86_64-apple-darwin/eden-x86_64-apple-darwin.tar.gz | awk '{print $1}')
+          MACOS_ARM_SHA256=$(shasum -a 256 artifacts/eden-aarch64-apple-darwin/eden-aarch64-apple-darwin.tar.gz | awk '{print $1}')
+          LINUX_X86_SHA256=$(shasum -a 256 artifacts/eden-x86_64-unknown-linux-gnu/eden-x86_64-unknown-linux-gnu.tar.gz | awk '{print $1}')
+          LINUX_ARM_SHA256=$(shasum -a 256 artifacts/eden-aarch64-unknown-linux-gnu/eden-aarch64-unknown-linux-gnu.tar.gz | awk '{print $1}')
+
+          git clone https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/omnidotdev/homebrew-tap.git tap
+          cd tap
+
+          mkdir -p Formula
+          cat > Formula/eden.rb <<'FORMULAEOF'
+          class Eden < Formula
+            desc "Developer onboarding preflight checks"
+            homepage "https://eden.omni.dev"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/omnidotdev/eden-cli/releases/download/v${VERSION}/eden-aarch64-apple-darwin.tar.gz"
+                sha256 "${MACOS_ARM_SHA256}"
+              end
+              on_intel do
+                url "https://github.com/omnidotdev/eden-cli/releases/download/v${VERSION}/eden-x86_64-apple-darwin.tar.gz"
+                sha256 "${MACOS_X86_SHA256}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/omnidotdev/eden-cli/releases/download/v${VERSION}/eden-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "${LINUX_ARM_SHA256}"
+              end
+              on_intel do
+                url "https://github.com/omnidotdev/eden-cli/releases/download/v${VERSION}/eden-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${LINUX_X86_SHA256}"
+              end
+            end
+
+            def install
+              bin.install "eden"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/eden --version")
+            end
+          end
+          FORMULAEOF
+          sed -i "s/\${VERSION}/${VERSION}/g; s/\${MACOS_ARM_SHA256}/${MACOS_ARM_SHA256}/g; s/\${MACOS_X86_SHA256}/${MACOS_X86_SHA256}/g; s/\${LINUX_X86_SHA256}/${LINUX_X86_SHA256}/g; s/\${LINUX_ARM_SHA256}/${LINUX_ARM_SHA256}/g" Formula/eden.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/eden.rb
+          git commit -m "chore: update eden to v${VERSION}"
+          git push
