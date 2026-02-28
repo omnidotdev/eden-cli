@@ -1,13 +1,30 @@
-# 🌿 Eden
+<div align="center">
+  <img src="/assets/logo.png" width="100" />
 
-Developer onboarding preflight checks.
+  <h1 align="center">Eden</h1>
 
-Eden is a Rust-powered CLI tool that verifies required dependencies and configurations are properly installed before development begins. Run one command to ensure your dev environment is ready.
+[Website](https://eden.omni.dev) | [Docs](https://docs.omni.dev/armory/eden) | [Feedback](https://backfeed.omni.dev/workspaces/omni/projects/eden) | [Discord](https://discord.gg/omnidotdev) | [X](https://x.com/omnidotdev)
+
+</div>
+
+**Eden** is a Rust-powered CLI tool that verifies required dependencies and configurations are properly installed before development begins. Run one command to ensure your dev environment is ready.
 
 ## Installation
 
-```sh
-cargo install eden-cli
+| Platform | Channel | Command / Link |
+| --- | --- | --- |
+| All | [GitHub Releases](https://github.com/omnidotdev/eden-cli/releases) | Download from releases page |
+| All | [crates.io](https://crates.io/crates/eden-cli) | `cargo install eden-cli` |
+| macOS / Linux | [Homebrew](https://github.com/omnidotdev/homebrew-tap/blob/master/Formula/eden.rb) | `brew install omnidotdev/tap/eden` |
+| Arch Linux | [AUR](https://aur.archlinux.org/packages/omnidotdev-eden) / [AUR (bin)](https://aur.archlinux.org/packages/omnidotdev-eden-bin) | `paru -S omnidotdev-eden` or `paru -S omnidotdev-eden-bin` |
+
+### Build from source
+
+```bash
+git clone https://github.com/omnidotdev/eden-cli
+cd eden-cli
+cargo build --release
+# Binary will be at target/release/eden
 ```
 
 ## Quick Start
@@ -122,12 +139,11 @@ bun run version  # syncs `package.json` version → `Cargo.toml`
 
 ### CI/CD
 
-Two GitHub workflows handle versioning:
-
-| Workflow      | Trigger             | Purpose                                                         |
-| ------------- | ------------------- | --------------------------------------------------------------- |
-| `sync.yml`    | Push/PR to `master` | Validates versions match, runs tests, builds artifacts          |
-| `release.yml` | Push to `master`    | Creates releases via Changesets, builds multi-platform binaries |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `test.yml` | Push/PR to `master` | Runs fmt, clippy, and tests |
+| `sync.yml` | PR to `master` | Validates version sync, fmt, clippy, test, build |
+| `release.yml` | Push to `master` | Creates releases via Changesets, builds multi-platform binaries |
 
 The sync workflow will fail if `package.json` and `Cargo.toml` versions diverge.
 
@@ -142,6 +158,11 @@ The sync workflow will fail if `package.json` and `Cargo.toml` versions diverge.
    - `x86_64-apple-darwin`
    - `aarch64-apple-darwin`
 5. **Manually** publish to crates.io: `cargo publish`
+
+## Ecosystem
+
+- **[Omni CLI](https://github.com/omnidotdev/cli)**: Agentic CLI for the Omni ecosystem
+- **[Omni Terminal](https://github.com/omnidotdev/terminal)**: GPU-accelerated terminal emulator built to run everywhere
 
 ## License
 
