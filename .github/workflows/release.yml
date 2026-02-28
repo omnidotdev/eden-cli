@@ -184,3 +184,48 @@ jobs:
           git add Formula/eden.rb
           git commit -m "chore: update eden to v${VERSION}"
           git push
+      - name: Publish to AUR
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        if: env.AUR_SSH_PRIVATE_KEY != ''
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          mkdir -p ~/.ssh
+          echo "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          cat >> ~/.ssh/config <<SSH
+          Host aur.archlinux.org
+            IdentityFile ~/.ssh/aur
+            User aur
+          SSH
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+
+          SOURCE_SHA256=$(curl -sL "https://github.com/omnidotdev/eden-cli/archive/v${VERSION}.tar.gz" | shasum -a 256 | awk '{print $1}')
+
+          publish_aur() {
+            local pkg="$1" sha="$2"
+            git clone "ssh://aur@aur.archlinux.org/${pkg}.git" "${pkg}" 2>/dev/null || {
+              mkdir "${pkg}" && cd "${pkg}" && git init && git remote add origin "ssh://aur@aur.archlinux.org/${pkg}.git" && cd ..
+            }
+            cd "${pkg}"
+            cp "../misc/packaging/aur/${pkg}/PKGBUILD" .
+            sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
+            if [ -n "$sha" ]; then
+              sed -i "s/^sha256sums=.*/sha256sums=('${sha}')/" PKGBUILD
+            fi
+            # Generate .SRCINFO from PKGBUILD
+            docker run --rm -v "$PWD:/pkg" -w /pkg archlinux:base bash -c \
+              "pacman -Sy --noconfirm base-devel >/dev/null 2>&1 && su -s /bin/bash nobody -c 'makepkg --printsrcinfo'" > .SRCINFO
+            git config user.name "Omni LLC"
+            git config user.email "team@omni.dev"
+            git add PKGBUILD .SRCINFO
+            git diff --cached --quiet || git commit -m "Update to v${VERSION}"
+            git push origin master
+            cd ..
+          }
+
+          publish_aur "omnidotdev-eden" "$SOURCE_SHA256"
+          publish_aur "omnidotdev-eden-bin" ""
+
+          rm -f ~/.ssh/aur
