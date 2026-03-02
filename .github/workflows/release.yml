@@ -30,7 +30,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1.4.9
         with:
-          version: bun run version && git add Cargo.toml
+          version: bun run version && cargo update --workspace && git add Cargo.toml Cargo.lock
           publish: |
             echo "Publishing @omnidotdev/eden-cli@$(jq -r '.version' package.json)"
           title: "chore(release): version packages"
