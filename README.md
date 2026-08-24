@@ -3,7 +3,7 @@
 
   <h1 align="center">Eden</h1>
 
-[Website](https://eden.omni.dev) | [Docs](https://docs.omni.dev/products/eden) | [Feedback](https://backfeed.omni.dev/workspaces/omni/projects/eden) | [Discord](https://discord.gg/omnidotdev) | [X](https://x.com/omnidotdev)
+[Website](https://eden.omni.dev) | [Docs](https://docs.omni.dev/products/eden) | [Feedback](https://backfeed.omni.dev/workspaces/omni/projects/eden) | [Discord](https://discord.gg/omnidotdev) | [X](https://x.com/omnidotdev) | [Threads](https://www.threads.com/@omnidotdev)
 
 </div>
 
